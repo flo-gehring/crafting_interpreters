@@ -3,6 +3,7 @@ package de.friendlyhedgehog.tool;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 public class GenerateAst {
@@ -12,11 +13,15 @@ public class GenerateAst {
             System.exit(64);
         }
         String outputDir = args[0];
-        defineAst(outputDir, "Expr", List.of(
-                "Binary     : Expr left, Token operator, Expr right",
-                "Grouping   : Expr expression",
-                "Literal    : Object value",
-                "Unary      : Token operator, Expr right"
+//        defineAst(outputDir, "Expr", List.of(
+//                "Binary     : Expr left, Token operator, Expr right",
+//                "Grouping   : Expr expression",
+//                "Literal    : Object value",
+//                "Unary      : Token operator, Expr right"
+//        ));
+        defineAst(outputDir, "Stmt", Arrays.asList(
+                "Expression : Expr expression",
+                "Print      : Expr expression "
         ));
     }
 

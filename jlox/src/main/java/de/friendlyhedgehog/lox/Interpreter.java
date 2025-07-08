@@ -1,23 +1,49 @@
 package de.friendlyhedgehog.lox;
 
-public class Interpreter implements Expr.Visitor<Object> {
+import java.util.List;
+
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     class RuntimeError extends RuntimeException {
+
         final Token token;
 
         RuntimeError(Token token, String message) {
             super(message);
             this.token = token;
         }
+
     }
 
-    void interpret(Expr expression) {
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
-        } catch (RuntimeError error) {
-            Lox.runtimeError(error);
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } catch (RuntimeError e) {
+            Lox.runtimeError(e);
         }
+    }
+
+    private Object evaluate(Expr expr) {
+        return expr.accept(this);
+    }
+
+    private void execute(Stmt statement) {
+        statement.accept(this);
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
     }
 
     private String stringify(Object object) {
@@ -118,9 +144,5 @@ public class Interpreter implements Expr.Visitor<Object> {
         if (object == null) return false;
         if (object instanceof Boolean b) return b;
         return true;
-    }
-
-    private Object evaluate(Expr expr) {
-        return expr.accept(this);
     }
 }
