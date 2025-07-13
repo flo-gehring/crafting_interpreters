@@ -1,9 +1,18 @@
 package de.friendlyhedgehog.lox;
 
 public class AstPrinter implements Expr.Visitor<String> {
-
     String print(Expr expr) {
         return expr.accept(this);
+    }
+
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return "(" + expr.name.lexeme + " = " + print(expr.value) + ")";
+    }
+
+    @Override
+    public String visitVariableExpr(Expr.Variable expr) {
+        return expr.name.lexeme;
     }
 
     @Override
