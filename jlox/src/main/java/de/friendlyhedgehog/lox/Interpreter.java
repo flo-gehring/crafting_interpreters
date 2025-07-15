@@ -124,7 +124,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
         Object value = null;
-        if(stmt.value != null) value = evaluate(stmt.value);
+        if (stmt.value != null) value = evaluate(stmt.value);
         throw new Return(value);
     }
 
@@ -213,6 +213,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         if (a == null && b == null) return true;
         if (a == null) return false;
         return a.equals(b);
+    }
+
+    @Override
+    public Object visitLambdaExpr(Expr.Lambda expr) {
+        return new LoxFunction(expr, environment);
     }
 
     @Override

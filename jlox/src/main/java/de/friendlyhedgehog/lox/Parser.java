@@ -29,7 +29,7 @@ public class Parser {
 
     private Stmt declaration() {
         try {
-            if (match(FUN)) return function("function");
+            if (check(FUN) && !checkNext(LEFT_PAREN) && match(FUN)) return function("function");
             if (match(VAR)) return varDeclaration();
             return statement();
         } catch (ParseError parseError) {
@@ -38,9 +38,15 @@ public class Parser {
         }
     }
 
+
     private Stmt function(String kind) {
         Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
         consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        Expr.Lambda lambda = lambda(kind);
+        return new Stmt.Function(name, lambda.params, lambda.body);
+    }
+
+    private Expr.Lambda lambda(String kind) {
         ArrayList<Token> parameters = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
             do {
@@ -53,14 +59,14 @@ public class Parser {
         consume(RIGHT_PAREN, "Expect ')' after parameters.");
         consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
         List<Stmt> body = block();
-        return new Stmt.Function(name, parameters, body);
+        return new Expr.Lambda(parameters, body);
     }
 
     private Stmt statement() {
         if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
-        if(match(RETURN)) return returnStatement();
+        if (match(RETURN)) return returnStatement();
         if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
         return expressionStatement();
@@ -69,7 +75,7 @@ public class Parser {
     private Stmt returnStatement() {
         Token keyword = previous();
         Expr value = null;
-        if(!check(SEMICOLON)) {
+        if (!check(SEMICOLON)) {
             value = expression();
         }
         consume(SEMICOLON, "Expect ';' after return value");
@@ -253,7 +259,21 @@ public class Parser {
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
+        return lambdaExpression();
+    }
+
+    private Expr lambdaExpression() {
+        if (match(FUN)) {
+            consume(LEFT_PAREN, "Expect '(' after lambda declaration.");
+            Expr.Lambda lambda = lambda("Lambda");
+            if (match(LEFT_PAREN)) return finishCall(lambda);
+            return lambda;
+        }
         return call();
+    }
+
+    private void callLambda() {
+
     }
 
     private Expr call() {
@@ -347,6 +367,12 @@ public class Parser {
     private boolean check(TokenType type) {
         if (isAtEnd()) return false;
         return peek().type == type;
+    }
+
+    private boolean checkNext(TokenType tokenType) {
+        if(isAtEnd()) return false;
+        if(current + 1 >= tokens.size()) return false;
+        return tokens.get(current + 1).type == tokenType;
     }
 
     private Token previous() {

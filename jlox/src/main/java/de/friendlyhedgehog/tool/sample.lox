@@ -1,23 +1,16 @@
-fun fib(n) {
-    if(n<=1) return n;
-    return fib(n-1) + fib(n-1);
-}
-var i = 0;
-while(i < 10) {
-    print i;
-    i = i + 1;
+fun test() {
+    return "test";
 }
 
-fun makeCounter() {
-    var i = 0;
-    fun count() {
-        i = i +1;
-        print i;
-    }
-    return count;
-}
+var i = fun (name) {
+    return "hello " + name;
+}("hedgehog");
 
-var counter = makeCounter();
-counter();
-counter();
+var greet = fun(name) {
+    return "Greetings " + name;
+};
+var shout = test() + "!";
+print test();
 print i;
+print greet("Igel");
+print shout;
