@@ -52,6 +52,9 @@ public class Lox {
         Resolver resolver = new Resolver(interpreter);
         resolver.resolve(statements);
         if (hadError) return;
+        for (Token unusedVar : resolver.getUnusedVariables()) {
+            System.err.println("Variable '" + unusedVar.lexeme + "' at line " + unusedVar.line + " is defined but never accessed");
+        }
         interpreter.interpret(statements);
     }
 

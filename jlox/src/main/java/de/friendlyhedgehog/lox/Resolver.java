@@ -1,14 +1,18 @@
 package de.friendlyhedgehog.lox;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+    private final Stack<Set<Token>> variablesUsed = new Stack<>();
+
+    public List<Token> getUnusedVariables() {
+        return unusedVariables;
+    }
+
+    private final List<Token> unusedVariables = new ArrayList<>();
     private FunctionType currentFunction = FunctionType.NONE;
 
     Resolver(Interpreter interpreter) {
@@ -113,6 +117,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitFunctionStmt(Stmt.Function stmt) {
         declare(stmt.name);
         define(stmt.name);
+        variablesUsed.peek().remove(stmt.name);
         resolveFunction(stmt, FunctionType.FUNCTION);
         return null;
     }
@@ -154,6 +159,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private void define(Token name) {
         if (scopes.isEmpty()) return;
         scopes.peek().put(name.lexeme, true);
+        variablesUsed.peek().add(name);
     }
 
     void resolve(List<Stmt> statements) {
@@ -179,6 +185,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         for (int i = scopes.size() - 1; i >= 0; i--) {
             if (scopes.get(i).containsKey(name.lexeme)) {
                 interpreter.resolve(expr, scopes.size() - 1 - i);
+                variablesUsed.get(i).remove(name);
                 return;
             }
         }
@@ -194,9 +201,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private void beginScope() {
         scopes.push(new HashMap<String, Boolean>());
+        variablesUsed.push(new HashSet<>());
     }
 
     private void endScope() {
         scopes.pop();
+        unusedVariables.addAll(variablesUsed.pop());
     }
 }
