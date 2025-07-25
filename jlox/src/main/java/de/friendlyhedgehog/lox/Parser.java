@@ -30,6 +30,7 @@ public class Parser {
     private Stmt declaration() {
         try {
             if (check(FUN) && !checkNext(LEFT_PAREN) && match(FUN)) return function("function");
+            if (match(CLASS)) return classDeclaration();
             if (match(VAR)) return varDeclaration();
             return statement();
         } catch (ParseError parseError) {
@@ -38,8 +39,19 @@ public class Parser {
         }
     }
 
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect class name");
+        consume(LEFT_BRACE, "Expect { before class Body");
+        List<Stmt.Function> methods = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add(function("method"));
+        }
+        consume(RIGHT_BRACE, "Expect } after class body.");
+        return new Stmt.Class(name, methods);
+    }
 
-    private Stmt function(String kind) {
+
+    private Stmt.Function function(String kind) {
         Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
         consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
         Expr.Lambda lambda = lambda(kind);
@@ -370,8 +382,8 @@ public class Parser {
     }
 
     private boolean checkNext(TokenType tokenType) {
-        if(isAtEnd()) return false;
-        if(current + 1 >= tokens.size()) return false;
+        if (isAtEnd()) return false;
+        if (current + 1 >= tokens.size()) return false;
         return tokens.get(current + 1).type == tokenType;
     }
 

@@ -9,3 +9,18 @@ var a = "global";
     var a = "block";
     showA();
 }
+
+class Animal {
+
+    dog() {
+        return "woof";
+    }
+
+    cat() {
+            return "meow";
+        }
+
+}
+
+print Animal;
+print Animal();

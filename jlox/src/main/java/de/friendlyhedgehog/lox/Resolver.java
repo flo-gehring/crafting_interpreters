@@ -28,6 +28,21 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        declare(stmt.name);
+        define(stmt.name);
+        Token name = stmt.name;
+        removeTokenFromUnused(name);
+        return null;
+    }
+
+    private void removeTokenFromUnused(Token name) {
+        if(!variablesUsed.isEmpty()) {
+            variablesUsed.peek().remove(name);
+        }
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         resolve(stmt.expression);
         return null;
@@ -117,7 +132,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitFunctionStmt(Stmt.Function stmt) {
         declare(stmt.name);
         define(stmt.name);
-        variablesUsed.peek().remove(stmt.name);
+        removeTokenFromUnused(stmt.name);
         resolveFunction(stmt, FunctionType.FUNCTION);
         return null;
     }
