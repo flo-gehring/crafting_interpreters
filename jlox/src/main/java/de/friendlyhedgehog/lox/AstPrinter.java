@@ -36,6 +36,21 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitSetExpr(Expr.Set expr) {
+        return "(set [" + print(expr.object) + "]." + expr.name + "=" + print(expr.value);
+    }
+
+    @Override
+    public String visitThisExpr(Expr.This expr) {
+        return "this";
+    }
+
+    @Override
+    public String visitGetExpr(Expr.Get expr) {
+        return "(get [" + print(expr.object) + "]." + expr.name + ")";
+    }
+
+    @Override
     public String visitGroupingExpr(Expr.Grouping expr) {
         return parenthesize("group", expr.expression);
     }

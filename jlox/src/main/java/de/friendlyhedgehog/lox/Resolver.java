@@ -4,8 +4,22 @@ import java.util.*;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
+    private enum ClassType {
+        NONE,
+        CLASS
+    }
+
+    private enum FunctionType {
+        NONE,
+        METHOD,
+        INITIALIZER,
+        FUNCTION
+    }
+
+
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+
     private final Stack<Set<Token>> variablesUsed = new Stack<>();
 
     public List<Token> getUnusedVariables() {
@@ -14,6 +28,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private final List<Token> unusedVariables = new ArrayList<>();
     private FunctionType currentFunction = FunctionType.NONE;
+    private ClassType currentClass = ClassType.NONE;
 
     Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
@@ -29,15 +44,28 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
-        declare(stmt.name);
-        define(stmt.name);
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
         Token name = stmt.name;
+        declare(name);
+        define(name);
         removeTokenFromUnused(name);
+        beginScope();
+        scopes.peek().put("this", true);
+        for (Stmt.Function method : stmt.methods) {
+            FunctionType declaration = FunctionType.METHOD;
+            if (method.name.lexeme.equals("init")) {
+                declaration = FunctionType.INITIALIZER;
+            }
+            resolveFunction(method, declaration);
+        }
+        endScope();
+        currentClass = enclosingClass;
         return null;
     }
 
     private void removeTokenFromUnused(Token name) {
-        if(!variablesUsed.isEmpty()) {
+        if (!variablesUsed.isEmpty()) {
             variablesUsed.peek().remove(name);
         }
     }
@@ -69,6 +97,29 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         for (Expr argument : expr.arguments) {
             resolve(argument);
         }
+        return null;
+    }
+
+    @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.value);
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class");
+            return null;
+        }
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
@@ -117,7 +168,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         if (currentFunction == FunctionType.NONE) {
             Lox.error(stmt.keyword, "Can't return from top-level code.");
         }
-        if (stmt.value != null) resolve(stmt.value);
+        if (stmt.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Lox.error(stmt.keyword, "Can't return from an Initializer");
+            }
+            resolve(stmt.value);
+        }
         return null;
     }
 
