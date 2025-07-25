@@ -79,11 +79,17 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitLambdaExpr(Expr.Lambda expr) {
+        resolve(expr.body);
+        for (Token param : expr.params) {
+            declare(param);
+            define(param);
+        }
         return null;
     }
 
     @Override
     public Void visitPrintStmt(Stmt.Print stmt) {
+        resolve(stmt.expression);
         return null;
     }
 
