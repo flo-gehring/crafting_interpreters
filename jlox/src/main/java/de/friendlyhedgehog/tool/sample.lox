@@ -56,3 +56,19 @@ var thing = Thing();
 var callback = thing.getCallback();
 thing.name = "Bob";
 callback();
+
+class Doughnut {
+    cook() {
+        print "Fry until golden brown.";
+    }
+}
+
+class BostonCream < Doughnut {
+    cook() {
+        super.cook();
+        print "Pipe full of custard and coat with chocolate";
+    }
+}
+
+var cookMethod = BostonCream().cook;
+cookMethod();
