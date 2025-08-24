@@ -27,12 +27,14 @@ static char *readFile(const char *path) {
     }
     fseek(file, 0, SEEK_END);
     size_t fileSize = ftell(file);
+    fseek ( file , 0 , SEEK_SET );
     char *buffer = (char *) malloc(fileSize + 1);
     if (buffer == NULL) {
         fprintf(stderr, "Could not allocate enough memory to read \"%s\"\n", path);
     }
     size_t bytesRead = fread(buffer, sizeof(char), fileSize, file);
     if (bytesRead < fileSize) {
+        perror("fread");
         fprintf(stderr, "Could not read file \"%s\"\n", path);
         exit(74);
     }
